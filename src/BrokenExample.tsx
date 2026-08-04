@@ -1,9 +1,7 @@
 import { useState } from 'react';
 
 export function BrokenExample({ show }: { show: boolean }) {
-  if (show) {
-    const [count] = useState(0); // フックを if の中で呼んでいる＝rules-of-hooks 違反
-    return <div>{count}</div>;
-  }
-  return null;
+  const [count] = useState(0); // フックは常に先頭で呼ぶ（毎レンダー同じ順序）
+  if (!show) return null;      // 分岐は return で行う
+  return <div>{count}</div>;
 }
