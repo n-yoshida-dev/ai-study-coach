@@ -82,13 +82,18 @@ function App() {
           onSubmit={editingRecord ? updateRecord : addRecord}
           onCancel={() => setEditingRecordId(null)}
         />
-        <StudyRecordList
+                <StudyRecordList
           records={records}
           onEdit={(record) => setEditingRecordId(record.id)}
           onDelete={deleteRecord}
         />
       </div>
+
+      <footer className="page-footer">
+        <p>あなたの学習を記録・可視化する学習コーチ</p>
+      </footer>
     </main>
+
   )
 }
 
