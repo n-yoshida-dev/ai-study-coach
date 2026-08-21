@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import AuthPanel from './components/AuthPanel'
 import StudyRecordForm from './components/StudyRecordForm'
 import StudyRecordList from './components/StudyRecordList'
+import { useSession } from './hooks/useSession'
 import type { StudyRecord, StudyRecordInput } from './types/studyRecord'
 
 function compareStudyRecords(a: StudyRecord, b: StudyRecord) {
@@ -11,6 +13,7 @@ function compareStudyRecords(a: StudyRecord, b: StudyRecord) {
 }
 
 function App() {
+  const { session, isLoading } = useSession()
   const [records, setRecords] = useState<StudyRecord[]>([])
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null)
 
@@ -73,6 +76,7 @@ function App() {
       <header className="page-header">
         <h1>AI Study Coach</h1>
         <p>学習記録を管理するアプリ</p>
+        <AuthPanel session={session} isLoading={isLoading} />
       </header>
 
       <div className="content-grid">
