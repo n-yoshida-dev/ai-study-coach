@@ -74,6 +74,29 @@ h1 {
   font-size: 1.125rem;
 }
 
+.auth-panel {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.auth-status,
+.auth-user {
+  margin-bottom: 0;
+  color: #4b5563;
+}
+
+.auth-user {
+  font-weight: 700;
+}
+
+.auth-error {
+  flex-basis: 100%;
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
