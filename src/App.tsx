@@ -1,74 +1,27 @@
-import { useState } from 'react'
 import AuthPanel from './components/AuthPanel'
-import StudyRecordForm from './components/StudyRecordForm'
-import StudyRecordList from './components/StudyRecordList'
+import StudyRecordSection from './components/StudyRecordSection'
 import { useSession } from './hooks/useSession'
-import type { StudyRecord, StudyRecordInput } from './types/studyRecord'
-
-function compareStudyRecords(a: StudyRecord, b: StudyRecord) {
-  return (
-    b.studyDate.localeCompare(a.studyDate) ||
-    b.createdAt.localeCompare(a.createdAt)
-  )
-}
 
 function App() {
   const { session, isLoading } = useSession()
-  const [records, setRecords] = useState<StudyRecord[]>([])
-  const [editingRecordId, setEditingRecordId] = useState<string | null>(null)
 
-  const editingRecord =
-    records.find((record) => record.id === editingRecordId) ?? null
-
-  const addRecord = (input: StudyRecordInput) => {
-    const timestamp = new Date().toISOString()
-    const newRecord: StudyRecord = {
-      ...input,
-      id: crypto.randomUUID(),
-      createdAt: timestamp,
-      updatedAt: timestamp,
+  const renderContent = () => {
+    // 確認が終わるまでは何も出さない。
+    // ここで未ログイン画面を出すと、ログイン済みの人にも一瞬だけ案内がチラつく
+    if (isLoading) {
+      return null
     }
 
-    setRecords((current) =>
-      [newRecord, ...current].sort(compareStudyRecords),
-    )
-  }
-
-  const updateRecord = (input: StudyRecordInput) => {
-    if (!editingRecordId) {
-      return
+    if (!session) {
+      return (
+        <section className="panel sign-in-guide" aria-labelledby="sign-in-guide-heading">
+          <h2 id="sign-in-guide-heading">ログインが必要です</h2>
+          <p>Google でログインすると、学習記録の登録・閲覧ができます</p>
+        </section>
+      )
     }
 
-    const timestamp = new Date().toISOString()
-
-    setRecords((current) =>
-      current
-        .map((record) =>
-          record.id === editingRecordId
-            ? { ...record, ...input, updatedAt: timestamp }
-            : record,
-        )
-        .sort(compareStudyRecords),
-    )
-    setEditingRecordId(null)
-  }
-
-  const deleteRecord = (record: StudyRecord) => {
-    const shouldDelete = window.confirm(
-      `「${record.category}」の学習記録を削除しますか？`,
-    )
-
-    if (!shouldDelete) {
-      return
-    }
-
-    setRecords((current) =>
-      current.filter((currentRecord) => currentRecord.id !== record.id),
-    )
-
-    if (editingRecordId === record.id) {
-      setEditingRecordId(null)
-    }
+    return <StudyRecordSection />
   }
 
   return (
@@ -79,25 +32,12 @@ function App() {
         <AuthPanel session={session} isLoading={isLoading} />
       </header>
 
-      <div className="content-grid">
-        <StudyRecordForm
-          key={editingRecord?.id ?? 'new-record'}
-          record={editingRecord}
-          onSubmit={editingRecord ? updateRecord : addRecord}
-          onCancel={() => setEditingRecordId(null)}
-        />
-                <StudyRecordList
-          records={records}
-          onEdit={(record) => setEditingRecordId(record.id)}
-          onDelete={deleteRecord}
-        />
-      </div>
+      {renderContent()}
 
       <footer className="page-footer">
         <p>あなたの学習を記録・可視化する学習コーチ</p>
       </footer>
     </main>
-
   )
 }
 
