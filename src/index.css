@@ -104,6 +104,17 @@ h1 {
   align-items: start;
 }
 
+.sign-in-guide {
+  max-width: 32rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.sign-in-guide p {
+  margin-bottom: 0;
+  color: #4b5563;
+}
+
 .panel {
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
