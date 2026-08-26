@@ -36,3 +36,9 @@ npm run test    # テスト（Vitest + React Testing Library）
 npm run lint    # Lint（Oxlint）
 npm run build   # 本番ビルド
 ```
+
+DB のテーブル定義を変えたときは、TypeScript の型を再生成します（Supabase CLI で `supabase link` 済みであること）。
+
+```bash
+npm run gen:types   # src/types/database.types.ts を上書き生成
+```

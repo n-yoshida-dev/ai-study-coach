@@ -1,8 +1,10 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { supabase } from './lib/supabase'
+import { fetchStudyRecords } from './lib/studyRecords'
+import type { StudyRecord } from './types/studyRecord'
 
 // App のテストはログイン状態による画面の切り替えだけを対象にする。
 // 学習記録の登録・編集・削除は StudyRecordSection.test.tsx で検証する
@@ -17,10 +19,31 @@ vi.mock('./lib/supabase', () => ({
   },
 }))
 
+// ログイン済み画面（StudyRecordSection）が DB を読みに行くので、その窓口も偽物にする
+vi.mock('./lib/studyRecords', () => ({
+  fetchStudyRecords: vi.fn(),
+  insertStudyRecord: vi.fn(),
+  updateStudyRecord: vi.fn(),
+  deleteStudyRecord: vi.fn(),
+}))
+
 const getSession = vi.mocked(supabase.auth.getSession)
 const onAuthStateChange = vi.mocked(supabase.auth.onAuthStateChange)
+const fetchStudyRecordsMock = vi.mocked(fetchStudyRecords)
 
-const session = { user: { email: 'learner@example.com' } } as Session
+const session = {
+  user: { id: 'user-1', email: 'learner@example.com' },
+} as Session
+
+const savedRecord: StudyRecord = {
+  id: 'record-1',
+  studyDate: '2026-07-12',
+  category: 'React',
+  durationMinutes: 60,
+  note: '',
+  createdAt: '2026-07-12T10:00:00.000Z',
+  updatedAt: '2026-07-12T10:00:00.000Z',
+}
 
 let notifyAuthChange: (event: AuthChangeEvent, session: Session | null) => void
 
@@ -32,6 +55,7 @@ describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getSession.mockResolvedValue({ data: { session: null }, error: null })
+    fetchStudyRecordsMock.mockResolvedValue([])
     onAuthStateChange.mockImplementation((callback) => {
       notifyAuthChange = callback
       return {
@@ -97,23 +121,13 @@ describe('App', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('ログアウトすると登録済みの学習記録が画面から消え、再ログインしても残らない', async () => {
+  it('ログアウトすると学習記録が画面から消え、再ログインすると DB から読み直す', async () => {
     getSession.mockResolvedValue({ data: { session }, error: null })
+    fetchStudyRecordsMock.mockResolvedValue([savedRecord])
 
     render(<App />)
-    await screen.findByRole('form', { name: FORM_NAME })
-
-    fireEvent.change(screen.getByLabelText('学習日'), {
-      target: { value: '2026-07-12' },
-    })
-    fireEvent.change(screen.getByLabelText('学習分野'), {
-      target: { value: 'React' },
-    })
-    fireEvent.change(screen.getByLabelText('学習時間（分）'), {
-      target: { value: '60' },
-    })
-    fireEvent.submit(screen.getByRole('form', { name: FORM_NAME }))
-    expect(screen.getByRole('listitem')).toBeInTheDocument()
+    expect(await screen.findByRole('listitem')).toBeInTheDocument()
+    expect(fetchStudyRecordsMock).toHaveBeenCalledTimes(1)
 
     act(() => notifyAuthChange('SIGNED_OUT', null))
 
@@ -125,7 +139,7 @@ describe('App', () => {
     act(() => notifyAuthChange('SIGNED_IN', session))
 
     expect(screen.getByRole('form', { name: FORM_NAME })).toBeInTheDocument()
-    expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
-    expect(screen.getByText('学習記録はありません')).toBeInTheDocument()
+    expect(await screen.findByRole('listitem')).toBeInTheDocument()
+    expect(fetchStudyRecordsMock).toHaveBeenCalledTimes(2)
   })
 })

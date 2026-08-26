@@ -3,7 +3,8 @@ import type { StudyRecord, StudyRecordInput } from '../types/studyRecord'
 
 type StudyRecordFormProps = {
   record: StudyRecord | null
-  onSubmit: (input: StudyRecordInput) => void
+  // 保存は通信を伴うので非同期。true なら保存できたのでフォームを空にする
+  onSubmit: (input: StudyRecordInput) => Promise<boolean>
   onCancel: () => void
 }
 
@@ -74,12 +75,13 @@ function StudyRecordForm({
       : initialValues,
   )
   const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const updateValue = (field: keyof FormValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }))
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     const nextErrors = validate(values)
@@ -89,12 +91,25 @@ function StudyRecordForm({
       return
     }
 
-    onSubmit({
-      studyDate: values.studyDate,
-      category: values.category.trim(),
-      durationMinutes: Number(values.durationMinutes),
-      note: values.note,
-    })
+    setIsSubmitting(true)
+
+    let isSaved = false
+
+    try {
+      isSaved = await onSubmit({
+        studyDate: values.studyDate,
+        category: values.category.trim(),
+        durationMinutes: Number(values.durationMinutes),
+        note: values.note,
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+
+    // 保存に失敗したときは入力を残す（書き直せるように）
+    if (!isSaved) {
+      return
+    }
 
     setValues(initialValues)
     setErrors({})
@@ -187,7 +202,9 @@ function StudyRecordForm({
         </div>
 
         <div className="form-actions">
-          <button type="submit">{isEditing ? '更新する' : '登録する'}</button>
+          <button type="submit" disabled={isSubmitting}>
+            {isEditing ? '更新する' : '登録する'}
+          </button>
           {isEditing && (
             <button
               type="button"
