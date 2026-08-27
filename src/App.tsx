@@ -21,7 +21,8 @@ function App() {
       )
     }
 
-    return <StudyRecordSection />
+    // 記録を保存するときに「誰の記録か」が要るので、ログイン中のユーザー ID を渡す
+    return <StudyRecordSection userId={session.user.id} />
   }
 
   return (

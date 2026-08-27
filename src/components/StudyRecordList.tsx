@@ -2,12 +2,14 @@ import type { StudyRecord } from '../types/studyRecord'
 
 type StudyRecordListProps = {
   records: StudyRecord[]
+  isLoading?: boolean
   onEdit: (record: StudyRecord) => void
   onDelete: (record: StudyRecord) => void
 }
 
 function StudyRecordList({
   records,
+  isLoading = false,
   onEdit,
   onDelete,
 }: StudyRecordListProps) {
@@ -15,7 +17,9 @@ function StudyRecordList({
     <section className="panel" aria-labelledby="record-list-heading">
       <h2 id="record-list-heading">学習記録一覧</h2>
 
-      {records.length === 0 ? (
+      {isLoading ? (
+        <p className="empty-message">学習記録を読み込んでいます</p>
+      ) : records.length === 0 ? (
         <p className="empty-message">学習記録はありません</p>
       ) : (
         <ul className="record-list">
